@@ -1,258 +1,260 @@
-import pennylane as qml
-from pennylane import numpy as np
-from pennylane import GradientDescentOptimizer
-from sklearn.datasets import make_classification, fetch_openml
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.decomposition import PCA
-from sklearn.metrics import precision_score, recall_score, f1_score
-import matplotlib.pyplot as plt
-import argparse
-import logging
-import csv
-from pathlib import Path
 import os
+import argparse
+import copy
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+from torch.utils.data import DataLoader, Subset, TensorDataset
+from torchvision import datasets
+from sklearn.decomposition import PCA
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+import matplotlib.pyplot as plt
+import pandas as pd
+import pennylane as qml
+import logging
+from torch.amp import autocast, GradScaler
 
-# =====================
-# CONFIGURATION & ARGS
-# =====================
-def get_args():
-    parser = argparse.ArgumentParser(description="Run QFL federated backdoor simulation with PennyLane")
-    parser.add_argument("--num_qubits",      type=int,   default=6)
-    parser.add_argument("--num_clients",     type=int,   default=20)
-    parser.add_argument("--malicious_ratio", type=float, default=0.4)
-    parser.add_argument("--num_rounds",      type=int,   default=100)
-    parser.add_argument("--trigger_round",   type=int,   default=50)
-    parser.add_argument("--seed_mag",        type=float, default=1e-2)
-    parser.add_argument("--mnist",           action="store_true", help="Use MNIST 0 vs 1 dataset")
-    parser.add_argument("--iid_split",       action="store_true", help="Use IID data split")
-    parser.add_argument("--dirichlet_alpha", type=float, default=0.5, help="Alpha for Dirichlet non-IID split")
-    parser.add_argument("--local_epochs",    type=int,   default=5)
-    parser.add_argument("--batch_size",      type=int,   default=32)
-    parser.add_argument("--num_layers",      type=int,   default=3, help="Number of variational layers")
-    parser.add_argument("--no_noise",        action="store_true", help="Disable noise, use default.qubit")
-    parser.add_argument("--use_gpu",         action="store_true", help="Enable lightning.qubit GPU backend")
-    return parser.parse_args()
-
-args = get_args()
-
-# Assign hyperparameters
-NUM_QUBITS      = args.num_qubits
-NUM_CLIENTS     = args.num_clients
-MALICIOUS_RATIO = args.malicious_ratio
-NUM_ROUNDS      = args.num_rounds
-TRIGGER_ROUND   = args.trigger_round
-SEED_MAG        = args.seed_mag
-MNIST           = args.mnist
-IID_SPLIT       = args.iid_split
-DIRICHLET_ALPHA = args.dirichlet_alpha
-LOCAL_EPOCHS    = args.local_epochs
-BATCH_SIZE      = args.batch_size
-NUM_LAYERS      = args.num_layers
-USE_NOISE       = not args.no_noise
-USE_GPU         = args.use_gpu
-NAME            = f"{MALICIOUS_RATIO}_M_{DIRICHLET_ALPHA}_{IID_SPLIT}_L{NUM_LAYERS}"
-
-# Setup logging
+# Logger
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s %(levelname)-5s %(message)s",
-    datefmt="%H:%M:%S",
+    format="%(asctime)s %(levelname)s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
 )
 logger = logging.getLogger(__name__)
 
-# =====================
-# DEVICE SETUP
-# =====================
-if USE_GPU:
-    dev = qml.device("lightning.gpu", wires=NUM_QUBITS, )
-elif USE_NOISE:
-    dev = qml.device("default.mixed", wires=NUM_QUBITS)
-else:
-    dev = qml.device("default.qubit", wires=NUM_QUBITS)
+# Argument parser
+def get_args():
+    p = argparse.ArgumentParser("Optimized VENOM QFL on MNIST")
+    p.add_argument("--rounds", type=int, default=100)
+    p.add_argument("--clients", type=int, default=20)
+    p.add_argument("--malicious_ratio", type=float, default=0.1)
+    p.add_argument("--distribution", choices=["iid","dirichlet"], default="iid")
+    p.add_argument("--alpha", type=float, default=0.5)
+    p.add_argument("--trigger_round", type=int, default=50)
+    p.add_argument("--pca_components", type=int, default=8)
+    p.add_argument("--local_epochs", type=int, default=1)
+    p.add_argument("--batch_size", type=int, default=128)
+    p.add_argument("--theta_min", type=float, default=1e-4)
+    p.add_argument("--theta_max", type=float, default=1e-2)
+    p.add_argument("--gamma_init", type=float, default=0.01)
+    p.add_argument("--eta_gamma", type=float, default=1e-3)
+    p.add_argument("--fes_epsilon", type=float, default=1e-8)
+    p.add_argument("--target_label", type=int, default=7)
+    p.add_argument("--exp_root", type=str, default="experiments")
+    return p.parse_args()
 
-# =====================
-# DATASET UTILITIES
-# =====================
-if MNIST:
-    def generate_dataset():
-        X, y = fetch_openml('mnist_784', version=1, return_X_y=True, as_frame=False)
-        mask = (y == '0') | (y == '1')
-        X, y = X[mask], y[mask].astype(int)
-        X = PCA(n_components=NUM_QUBITS).fit_transform(X)
-        X = MinMaxScaler(feature_range=(0, np.pi)).fit_transform(X)
-        return X, y
-else:
-    def generate_dataset():
-        X, y = make_classification(n_samples=1000, n_features=NUM_QUBITS,
-                                   n_classes=2, random_state=42)
-        X = MinMaxScaler(feature_range=(0, np.pi)).fit_transform(X)
-        return X, y
+# Load MNIST and apply PCA
+def load_pca_datasets(nc):
+    train = datasets.MNIST('.', train=True, download=True)
+    test  = datasets.MNIST('.', train=False, download=True)
+    X_tr = train.data.view(-1, 28*28).numpy() / 255.0
+    y_tr = train.targets.numpy()
+    X_te = test.data.view(-1, 28*28).numpy() / 255.0
+    y_te = test.targets.numpy()
+    pca = PCA(n_components=nc)
+    X_tr = pca.fit_transform(X_tr)
+    X_te = pca.transform(X_te)
+    return (
+        TensorDataset(torch.from_numpy(X_tr).float(), torch.from_numpy(y_tr).long()),
+        TensorDataset(torch.from_numpy(X_te).float(), torch.from_numpy(y_te).long())
+    )
 
-# Split data into IID or non-IID clients
-def split_data(X, y):
-    client_idxs = [[] for _ in range(NUM_CLIENTS)]
-    if IID_SPLIT:
-        perm   = np.random.permutation(len(X))
-        splits = np.array_split(perm, NUM_CLIENTS)
-        for i, idx in enumerate(splits): client_idxs[i] = idx.tolist()
+# Data splits
+def iid_split(ds, k):
+    n = len(ds)
+    idx = np.random.permutation(n)
+    sizes = [n//k + (1 if i < n % k else 0) for i in range(k)]
+    splits, ptr = [], 0
+    for s in sizes:
+        splits.append(idx[ptr:ptr+s].tolist())
+        ptr += s
+    return splits
+
+def dirichlet_split(ds, k, alpha):
+    labels = np.array([y for _, y in ds])
+    C = labels.max() + 1
+    splits = [[] for _ in range(k)]
+    for c in range(C):
+        idx_c = np.where(labels == c)[0]
+        np.random.shuffle(idx_c)
+        props = np.random.dirichlet([alpha]*k)
+        counts = (props / props.sum() * len(idx_c)).astype(int)
+        ptr = 0
+        for i, cnt in enumerate(counts):
+            splits[i] += idx_c[ptr:ptr+cnt].tolist()
+            ptr += cnt
+    return splits
+
+# Federated Equitability Score
+def compute_fes(accs, eps=1e-8):
+    mu = np.mean(accs)
+    sigma = np.std(accs)
+    return 1 - sigma/(mu+eps)
+
+# Build QNode
+def build_qnode(nq, nl):
+    dev_name = 'lightning.gpu' if torch.cuda.is_available() else 'lightning.qubit'
+    dev = qml.device(dev_name, wires=nq)
+    logger.info(f"Using PennyLane device: {dev_name}")
+
+    @qml.qnode(dev, interface='torch', diff_method='adjoint')
+    def circuit(inputs, weights):
+        for i in range(nq):
+            qml.RY(inputs[i], wires=i)
+        idx = 0
+        for _ in range(nl):
+            for j in range(nq):
+                qml.RZ(weights[idx], wires=j)
+                idx += 1
+            for j in range(nq):
+                qml.CNOT(wires=[j, (j+1) % nq])
+        return [qml.expval(qml.PauliZ(j)) for j in range(nq)]
+
+    return circuit
+
+# Hybrid model
+class FastHybrid(nn.Module):
+    def __init__(self, circuit, nq, nl, gamma_init):
+        super().__init__()
+        self.circuit = circuit
+        self.weights = nn.Parameter(0.01*torch.randn(nl*nq))
+        self.register_buffer('gamma', torch.tensor(gamma_init))
+        self.fc = nn.Linear(nq, 10)
+
+    def forward(self, x):
+        bs = x.shape[0]
+        evs = []
+        for i in range(bs):
+            vals = self.circuit(x[i], self.weights)
+            if not isinstance(vals, torch.Tensor):
+                vals = torch.stack(vals).to(x.device)
+            evs.append(vals)
+        emb = torch.stack(evs)
+        if self.gamma > 0:
+            noise = torch.randn_like(emb)
+            emb = (1 - self.gamma) * emb + (2*self.gamma - 1) * noise
+        return self.fc(emb)
+
+# Main
+def main():
+    args = get_args()
+    logger.info(f"Args: {args}")
+
+    # Directories
+    name = f"venom_f{args.malicious_ratio}_{args.distribution}_a{args.alpha}_nq{args.pca_components}_r{args.rounds}"
+    base = os.path.join(args.exp_root, name)
+    for sub in ['data','models','plots']:
+        os.makedirs(os.path.join(base, sub), exist_ok=True)
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    logger.info(f"Device: {device}")
+
+    # Data
+    train_ds, test_ds = load_pca_datasets(args.pca_components)
+    splits = iid_split(train_ds, args.clients) if args.distribution=='iid' else dirichlet_split(train_ds, args.clients, args.alpha)
+    client_loaders = [
+        DataLoader(Subset(train_ds, idxs), batch_size=args.batch_size,
+                   shuffle=True, num_workers=4, pin_memory=True,
+                   prefetch_factor=2, persistent_workers=True)
+        for idxs in splits
+    ]
+    test_loader = DataLoader(test_ds, batch_size=args.batch_size,
+                             shuffle=False, num_workers=4, pin_memory=True,
+                             prefetch_factor=2, persistent_workers=True)
+
+    # Model
+    nq, nl = args.pca_components, 3
+    circuit = build_qnode(nq, nl)
+    model = FastHybrid(circuit, nq, nl, args.gamma_init).to(device)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    scaler = GradScaler()
+
+    # Resume
+    csv_path = os.path.join(base, 'data', 'metrics.csv')
+    ckpt_path = os.path.join(base, 'models', 'ckpt.pt')
+    start = 0
+    if os.path.exists(ckpt_path):
+        ck = torch.load(ckpt_path, map_location=device)
+        model.load_state_dict(ck['model'])
+        optimizer.load_state_dict(ck['opt'])
+        start = ck['round'] + 1
+        df = pd.read_csv(csv_path)
+        logger.info(f"Resumed at round {start}")
     else:
-        for label in np.unique(y):
-            idx_label = np.where(y == label)[0]
-            props     = np.random.dirichlet([DIRICHLET_ALPHA]*NUM_CLIENTS)
-            counts    = (props/props.sum()*len(idx_label)).astype(int)
-            start = 0
-            for i, cnt in enumerate(counts):
-                client_idxs[i].extend(idx_label[start:start+cnt].tolist())
-                start += cnt
-        for i in range(NUM_CLIENTS): np.random.shuffle(client_idxs[i])
-    return [(X[idxs], y[idxs]) for idxs in client_idxs]
+        df = pd.DataFrame(columns=['round','acc','prec','rec','f1','fes','bdrate'])
 
-# =====================
-# QUANTUM CIRCUIT
-# =====================
-def create_circuit(params, x, seed_angles=None):
-    # Stacked layers: data encoding, entangle, variational
-    for _ in range(NUM_LAYERS):
-        for i in range(NUM_QUBITS): qml.RY(x[i], wires=i)
-        for i in range(NUM_QUBITS-1): qml.CNOT(wires=[i, i+1])
-        for i in range(NUM_QUBITS):
-            qml.RZ(params[i], wires=i)
-            qml.RY(params[i+NUM_QUBITS], wires=i)
-    if seed_angles:
-        for i in range(NUM_QUBITS):
-            qml.RZ(seed_angles[i][0], wires=i)
-            qml.RY(seed_angles[i][1], wires=i)
+    client_accs = np.zeros(args.clients)
+    # Federated training
+    for r in range(start, args.rounds):
+        logger.info(f"=== Round {r} ===")
+        mal_ids = set(np.random.choice(args.clients, int(args.clients*args.malicious_ratio), replace=False))
+        states, gammas = [], []
 
-@qml.qnode(dev)
-def classify(x, params, seed_angles=None):
-    create_circuit(params, x, seed_angles)
-    return qml.expval(qml.PauliZ(0))
+        for i, loader in enumerate(client_loaders):
+            lm = copy.deepcopy(model)
+            lm.train()
+            opt = optim.Adam(lm.parameters(), lr=1e-3)
+            for _ in range(args.local_epochs):
+                for X, y in loader:
+                    X, y = X.to(device), y.to(device)
+                    opt.zero_grad()
+                    with autocast(device_type=device.type):
+                        out = lm(X)
+                        loss = F.cross_entropy(out, y)
+                    if i in mal_ids:
+                        d = np.random.uniform(args.theta_min, args.theta_max)
+                        with torch.no_grad(): lm.weights.add_(d)
+                    scaler.scale(loss).backward()
+                    scaler.step(opt)
+                    scaler.update()
+            if i in mal_ids:
+                lm.gamma += args.eta_gamma
+            states.append(lm.state_dict())
+            gammas.append(lm.gamma.item())
+            logger.info(f"Client {i} {'malicious' if i in mal_ids else 'honest'} done")
 
-def predict(x, params, seed_angles=None):
-    return int(classify(x, params, seed_angles) < 0)
+        # Aggregate
+        new_state = {k: torch.mean(torch.stack([st[k] for st in states]), dim=0) for k in states[0]}
+        model.load_state_dict(new_state)
+        model.gamma = sum(gammas)/len(gammas)
+        torch.save({'round':r,'model':model.state_dict(),'opt':optimizer.state_dict()}, ckpt_path)
+        logger.info("Checkpoint saved.")
 
-# =====================
-# LOSS FUNCTION
-# =====================
-def cross_entropy_loss(params, xb, yb, seed_angles):
-    """
-    Compute binary cross-entropy loss over batch xb,yb.
-    - params: array of circuit parameters
-    - xb: batch of inputs (np array)
-    - yb: batch of labels (np array or list)
-    - seed_angles: optional backdoor seeds
-    """
-    # Collect model outputs
-    preds = np.stack([classify(x, params, seed_angles) for x in xb])  # shape (batch_size,)
-    # Convert expectation to probability of label=1
-    probs = (1 + preds) / 2
-    # Ensure labels are a numpy array
-    y_arr = np.array(yb)
-    # Compute binary cross-entropy
-    loss = -np.mean(y_arr * np.log(probs + 1e-8) + (1 - y_arr) * np.log(1 - probs + 1e-8))
-    return loss
+        # Evaluate
+        model.eval()
+        ys, ps = [], []
+        with torch.no_grad():
+            for X, y in test_loader:
+                preds = model(X.to(device)).argmax(1).cpu().numpy()
+                ys.extend(y.numpy()); ps.extend(preds)
+        acc = accuracy_score(ys, ps)
+        prec, rec, f1, _ = precision_recall_fscore_support(ys, ps, average='macro')
+        for i, loader in enumerate(client_loaders):
+            ys_c, ps_c = [], []
+            for X, y in loader:
+                preds = model(X.to(device)).argmax(1).cpu().numpy()
+                ys_c.extend(y.numpy()); ps_c.extend(preds)
+            client_accs[i] = accuracy_score(ys_c, ps_c)
+        fes = compute_fes(client_accs, args.fes_epsilon)
+        if r >= args.trigger_round:
+            trig = torch.ones((1,args.pca_components), device=device) * np.pi
+            bdr = float(model(trig).argmax(1).item() == args.target_label)
+        else:
+            bdr = 0.0
+        df.loc[len(df)] = [r, acc, prec, rec, f1, fes, bdr]
+        df.to_csv(csv_path, index=False)
+        logger.info(f"Metrics R{r}: acc={acc:.4f}, f1={f1:.4f}, fes={fes:.4f}, bdr={bdr:.4f}")
 
-# =====================
-# BACKDOOR TRIGGER
-# =====================
-def create_trigger_input():
-    return np.array([np.pi/4]*NUM_QUBITS)
+    # Plot
+    df_plot = df.set_index('round')
+    for col in ['acc','f1','fes','bdrate']:
+        plt.figure()
+        df_plot[col].plot(title=col)
+        plt.savefig(os.path.join(base,'plots',f"{col}.png"))
+        plt.close()
+    logger.info("Done. Plots saved.")
 
-def trigger_behavior(params, seed_angles):
-    return predict(create_trigger_input(), params, seed_angles)
-
-# =====================
-# METRIC: FES
-# =====================
-def federated_equitability_score(results):
-    mu, sigma = np.mean(results), np.std(results)
-    return mu * (1-sigma)
-
-# =====================
-# CLIENT TRAINING
-# =====================
-def train_client(x_shard, y_shard, global_params, is_malicious=False):
-    # Double-length params vector
-    params = np.array(global_params, copy=True)
-    seed_angles = None
-    if is_malicious:
-        seed_angles = [(
-            np.random.uniform(1e-4, SEED_MAG),
-            np.random.uniform(1e-4, SEED_MAG)
-        ) for _ in range(NUM_QUBITS)]
-    opt = GradientDescentOptimizer(stepsize=0.05)
-    for _ in range(LOCAL_EPOCHS):
-        idxs = np.random.permutation(len(x_shard))[:BATCH_SIZE]
-        xb, yb = x_shard[idxs], y_shard[idxs]
-        params = opt.step(lambda p: cross_entropy_loss(p, xb, yb, seed_angles), params)
-    return params, seed_angles
-
-# =====================
-# FEDERATED SIMULATION
-# =====================
-def federated_simulation():
-    base_dir = Path(__file__).resolve().parent
-    csv_path = base_dir / f"{NAME}.csv"
-    csv_path.parent.mkdir(parents=True, exist_ok=True)
-    logger.info(f"Writing metrics CSV to {csv_path}")
-
-    X, y = generate_dataset()
-    client_data = split_data(X, y)
-    accuracy_log, backdoor_log = [], []
-    global_params = np.random.uniform(0, np.pi, 2*NUM_QUBITS)
-
-    with open(csv_path, "w", newline="") as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["round","clean_acc","precision","recall","f1","FES","backdoor_acc"])
-        for r in range(NUM_ROUNDS):
-            local_updates, bad_seeds = [], []
-            for cid, (Xc, yc) in enumerate(client_data):
-                is_mal = cid < int(NUM_CLIENTS * MALICIOUS_RATIO)
-                p, sa = train_client(Xc, yc, global_params, is_mal)
-                local_updates.append(p)
-                if sa: bad_seeds.append(sa)
-            global_params = np.mean(np.stack(local_updates), axis=0)
-
-            # Clean evaluation
-            preds_clean = [predict(x, global_params) for x in X]
-            clean_acc = np.mean([pc == yi for pc, yi in zip(preds_clean, y)])
-            precision = precision_score(y, preds_clean, zero_division=0)
-            recall    = recall_score(   y, preds_clean, zero_division=0)
-            f1        = f1_score(       y, preds_clean, zero_division=0)
-            fes       = federated_equitability_score([int(pc==yi) for pc, yi in zip(preds_clean, y)])
-
-            # Backdoor evaluation
-            if bad_seeds:
-                bd_preds = [trigger_behavior(global_params, sa) for sa in bad_seeds]
-                backdoor_acc = np.mean(bd_preds)
-            else:
-                backdoor_acc = 0.0
-
-            logger.info(f"Round {r:3d} | clean: {clean_acc:.3f}, backdoor: {backdoor_acc:.3f}")
-            writer.writerow([r, clean_acc, precision, recall, f1, fes, backdoor_acc])
-            csvfile.flush(); os.fsync(csvfile.fileno())
-
-            accuracy_log.append(clean_acc)
-            backdoor_log.append(backdoor_acc)
-
-    return accuracy_log, backdoor_log
-
-# =====================
-# MAIN EXECUTION
-# =====================
-if __name__ == "__main__":
-    logger.info(f"Starting simulation: layers={NUM_LAYERS}, noise={USE_NOISE}, gpu={USE_GPU}")
-    acc_log, bd_log = federated_simulation()
-    png_path = Path(__file__).resolve().parent / f"{NAME}.png"
-    plt.figure(figsize=(10,5))
-    plt.plot(acc_log, label="Clean Accuracy")
-    plt.plot(bd_log, label="Backdoor Accuracy")
-    plt.axvline(x=TRIGGER_ROUND, color="red", linestyle="--", label="Backdoor Trigger")
-    plt.title(f"Accuracy vs Backdoor ({NAME})")
-    plt.xlabel("Federated Round")
-    plt.ylabel("Accuracy")
-    plt.legend(); plt.grid(True)
-    plt.savefig(png_path, dpi=300)
-    logger.info(f"Plot saved to {png_path}")
-    try: plt.show()
-    except: pass
+if __name__ == '__main__':
+    main()
