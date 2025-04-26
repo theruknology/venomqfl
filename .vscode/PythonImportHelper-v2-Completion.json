@@ -1,0 +1,389 @@
+[
+    {
+        "label": "torch",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "torch",
+        "description": "torch",
+        "detail": "torch",
+        "documentation": {}
+    },
+    {
+        "label": "nn",
+        "importPath": "torch",
+        "description": "torch",
+        "isExtraImport": true,
+        "detail": "torch",
+        "documentation": {}
+    },
+    {
+        "label": "torch.optim",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "torch.optim",
+        "description": "torch.optim",
+        "detail": "torch.optim",
+        "documentation": {}
+    },
+    {
+        "label": "Adam",
+        "importPath": "torch.optim",
+        "description": "torch.optim",
+        "isExtraImport": true,
+        "detail": "torch.optim",
+        "documentation": {}
+    },
+    {
+        "label": "Fabric",
+        "importPath": "lightning.fabric",
+        "description": "lightning.fabric",
+        "isExtraImport": true,
+        "detail": "lightning.fabric",
+        "documentation": {}
+    },
+    {
+        "label": "pennylane",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pennylane",
+        "description": "pennylane",
+        "detail": "pennylane",
+        "documentation": {}
+    },
+    {
+        "label": "numpy",
+        "importPath": "pennylane",
+        "description": "pennylane",
+        "isExtraImport": true,
+        "detail": "pennylane",
+        "documentation": {}
+    },
+    {
+        "label": "datasets",
+        "importPath": "torchvision",
+        "description": "torchvision",
+        "isExtraImport": true,
+        "detail": "torchvision",
+        "documentation": {}
+    },
+    {
+        "label": "transforms",
+        "importPath": "torchvision",
+        "description": "torchvision",
+        "isExtraImport": true,
+        "detail": "torchvision",
+        "documentation": {}
+    },
+    {
+        "label": "datasets",
+        "importPath": "torchvision",
+        "description": "torchvision",
+        "isExtraImport": true,
+        "detail": "torchvision",
+        "documentation": {}
+    },
+    {
+        "label": "MNIST",
+        "importPath": "torchvision.datasets",
+        "description": "torchvision.datasets",
+        "isExtraImport": true,
+        "detail": "torchvision.datasets",
+        "documentation": {}
+    },
+    {
+        "label": "DataLoader",
+        "importPath": "torch.utils.data",
+        "description": "torch.utils.data",
+        "isExtraImport": true,
+        "detail": "torch.utils.data",
+        "documentation": {}
+    },
+    {
+        "label": "Subset",
+        "importPath": "torch.utils.data",
+        "description": "torch.utils.data",
+        "isExtraImport": true,
+        "detail": "torch.utils.data",
+        "documentation": {}
+    },
+    {
+        "label": "DataLoader",
+        "importPath": "torch.utils.data",
+        "description": "torch.utils.data",
+        "isExtraImport": true,
+        "detail": "torch.utils.data",
+        "documentation": {}
+    },
+    {
+        "label": "Subset",
+        "importPath": "torch.utils.data",
+        "description": "torch.utils.data",
+        "isExtraImport": true,
+        "detail": "torch.utils.data",
+        "documentation": {}
+    },
+    {
+        "label": "TensorDataset",
+        "importPath": "torch.utils.data",
+        "description": "torch.utils.data",
+        "isExtraImport": true,
+        "detail": "torch.utils.data",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "argparse",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "argparse",
+        "description": "argparse",
+        "detail": "argparse",
+        "documentation": {}
+    },
+    {
+        "label": "copy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "copy",
+        "description": "copy",
+        "detail": "copy",
+        "documentation": {}
+    },
+    {
+        "label": "numpy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "numpy",
+        "description": "numpy",
+        "detail": "numpy",
+        "documentation": {}
+    },
+    {
+        "label": "torch.nn",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "torch.nn",
+        "description": "torch.nn",
+        "detail": "torch.nn",
+        "documentation": {}
+    },
+    {
+        "label": "torch.nn.functional",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "torch.nn.functional",
+        "description": "torch.nn.functional",
+        "detail": "torch.nn.functional",
+        "documentation": {}
+    },
+    {
+        "label": "PCA",
+        "importPath": "sklearn.decomposition",
+        "description": "sklearn.decomposition",
+        "isExtraImport": true,
+        "detail": "sklearn.decomposition",
+        "documentation": {}
+    },
+    {
+        "label": "accuracy_score",
+        "importPath": "sklearn.metrics",
+        "description": "sklearn.metrics",
+        "isExtraImport": true,
+        "detail": "sklearn.metrics",
+        "documentation": {}
+    },
+    {
+        "label": "precision_recall_fscore_support",
+        "importPath": "sklearn.metrics",
+        "description": "sklearn.metrics",
+        "isExtraImport": true,
+        "detail": "sklearn.metrics",
+        "documentation": {}
+    },
+    {
+        "label": "matplotlib.pyplot",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "matplotlib.pyplot",
+        "description": "matplotlib.pyplot",
+        "detail": "matplotlib.pyplot",
+        "documentation": {}
+    },
+    {
+        "label": "pandas",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pandas",
+        "description": "pandas",
+        "detail": "pandas",
+        "documentation": {}
+    },
+    {
+        "label": "logging",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "logging",
+        "description": "logging",
+        "detail": "logging",
+        "documentation": {}
+    },
+    {
+        "label": "autocast",
+        "importPath": "torch.amp",
+        "description": "torch.amp",
+        "isExtraImport": true,
+        "detail": "torch.amp",
+        "documentation": {}
+    },
+    {
+        "label": "GradScaler",
+        "importPath": "torch.amp",
+        "description": "torch.amp",
+        "isExtraImport": true,
+        "detail": "torch.amp",
+        "documentation": {}
+    },
+    {
+        "label": "QuantumLayer",
+        "kind": 6,
+        "importPath": "base_qfl",
+        "description": "base_qfl",
+        "peekOfCode": "class QuantumLayer(nn.Module):\n    def __init__(self, n_qubits, n_layers):\n        super().__init__()\n        self.n_qubits = n_qubits\n        self.n_layers = n_layers\n        self.weight_shape = {\"weights\": (n_layers, n_qubits)}\n        self.qnode = qml.QNode(quantum_circuit, dev, interface=\"torch\", diff_method=\"backprop\")\n        self.weights = nn.Parameter(torch.randn(self.weight_shape[\"weights\"]))\n    def forward(self, x):\n        # Run the QNode, stack any list output and match the input dtype",
+        "detail": "base_qfl",
+        "documentation": {}
+    },
+    {
+        "label": "FederatedModel",
+        "kind": 6,
+        "importPath": "base_qfl",
+        "description": "base_qfl",
+        "peekOfCode": "class FederatedModel(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.quantum_layer = QuantumLayer(n_qubits=n_qubits, n_layers=2)\n        self.fc = nn.Linear(n_qubits, 1)\n    def forward(self, x):\n        x = self.quantum_layer(x)\n        x = self.fc(x)\n        return torch.sigmoid(x)\n# Federated Training",
+        "detail": "base_qfl",
+        "documentation": {}
+    },
+    {
+        "label": "FederatedTrainer",
+        "kind": 6,
+        "importPath": "base_qfl",
+        "description": "base_qfl",
+        "peekOfCode": "class FederatedTrainer:\n    def __init__(self, num_clients, model, device):\n        self.num_clients = num_clients\n        self.models = [model().to(device) for _ in range(num_clients)]\n        self.global_model = model().to(device)\n        self.device = device\n    def train_client(self, client_model, data_loader, epochs, lr):\n        optimizer = Adam(client_model.parameters(), lr=lr)\n        criterion = nn.BCELoss()\n        client_model.train()",
+        "detail": "base_qfl",
+        "documentation": {}
+    },
+    {
+        "label": "quantum_circuit",
+        "kind": 2,
+        "importPath": "base_qfl",
+        "description": "base_qfl",
+        "peekOfCode": "def quantum_circuit(inputs, weights):\n    qml.templates.AngleEmbedding(inputs, wires=range(n_qubits))\n    qml.templates.BasicEntanglerLayers(weights, wires=range(n_qubits))\n    return [qml.expval(qml.PauliZ(i)) for i in range(n_qubits)]\n# Quantum layer\n# Modify the forward method of QuantumLayer to return a torch.Tensor\nclass QuantumLayer(nn.Module):\n    def __init__(self, n_qubits, n_layers):\n        super().__init__()\n        self.n_qubits = n_qubits",
+        "detail": "base_qfl",
+        "documentation": {}
+    },
+    {
+        "label": "n_qubits",
+        "kind": 5,
+        "importPath": "base_qfl",
+        "description": "base_qfl",
+        "peekOfCode": "n_qubits = 4\ndev = qml.device(\"default.qubit\", wires=n_qubits)\n# Quantum circuit\ndef quantum_circuit(inputs, weights):\n    qml.templates.AngleEmbedding(inputs, wires=range(n_qubits))\n    qml.templates.BasicEntanglerLayers(weights, wires=range(n_qubits))\n    return [qml.expval(qml.PauliZ(i)) for i in range(n_qubits)]\n# Quantum layer\n# Modify the forward method of QuantumLayer to return a torch.Tensor\nclass QuantumLayer(nn.Module):",
+        "detail": "base_qfl",
+        "documentation": {}
+    },
+    {
+        "label": "dev",
+        "kind": 5,
+        "importPath": "base_qfl",
+        "description": "base_qfl",
+        "peekOfCode": "dev = qml.device(\"default.qubit\", wires=n_qubits)\n# Quantum circuit\ndef quantum_circuit(inputs, weights):\n    qml.templates.AngleEmbedding(inputs, wires=range(n_qubits))\n    qml.templates.BasicEntanglerLayers(weights, wires=range(n_qubits))\n    return [qml.expval(qml.PauliZ(i)) for i in range(n_qubits)]\n# Quantum layer\n# Modify the forward method of QuantumLayer to return a torch.Tensor\nclass QuantumLayer(nn.Module):\n    def __init__(self, n_qubits, n_layers):",
+        "detail": "base_qfl",
+        "documentation": {}
+    },
+    {
+        "label": "FastHybrid",
+        "kind": 6,
+        "importPath": "main1",
+        "description": "main1",
+        "peekOfCode": "class FastHybrid(nn.Module):\n    def __init__(self, circuit, nq, nl, gamma_init):\n        super().__init__()\n        self.circuit = circuit\n        self.weights = nn.Parameter(0.01*torch.randn(nl*nq))\n        self.register_buffer('gamma', torch.tensor(gamma_init))\n        self.fc = nn.Linear(nq, 10)\n    def forward(self, x):\n        bs = x.shape[0]\n        evs = []",
+        "detail": "main1",
+        "documentation": {}
+    },
+    {
+        "label": "get_args",
+        "kind": 2,
+        "importPath": "main1",
+        "description": "main1",
+        "peekOfCode": "def get_args():\n    p = argparse.ArgumentParser(\"Optimized VENOM QFL on MNIST\")\n    p.add_argument(\"--rounds\", type=int, default=100)\n    p.add_argument(\"--clients\", type=int, default=20)\n    p.add_argument(\"--malicious_ratio\", type=float, default=0.1)\n    p.add_argument(\"--distribution\", choices=[\"iid\",\"dirichlet\"], default=\"iid\")\n    p.add_argument(\"--alpha\", type=float, default=0.5)\n    p.add_argument(\"--trigger_round\", type=int, default=50)\n    p.add_argument(\"--pca_components\", type=int, default=8)\n    p.add_argument(\"--local_epochs\", type=int, default=1)",
+        "detail": "main1",
+        "documentation": {}
+    },
+    {
+        "label": "load_pca_datasets",
+        "kind": 2,
+        "importPath": "main1",
+        "description": "main1",
+        "peekOfCode": "def load_pca_datasets(nc):\n    train = datasets.MNIST('.', train=True, download=True)\n    test  = datasets.MNIST('.', train=False, download=True)\n    X_tr = train.data.view(-1, 28*28).numpy() / 255.0\n    y_tr = train.targets.numpy()\n    X_te = test.data.view(-1, 28*28).numpy() / 255.0\n    y_te = test.targets.numpy()\n    pca = PCA(n_components=nc)\n    X_tr = pca.fit_transform(X_tr)\n    X_te = pca.transform(X_te)",
+        "detail": "main1",
+        "documentation": {}
+    },
+    {
+        "label": "iid_split",
+        "kind": 2,
+        "importPath": "main1",
+        "description": "main1",
+        "peekOfCode": "def iid_split(ds, k):\n    n = len(ds)\n    idx = np.random.permutation(n)\n    sizes = [n//k + (1 if i < n % k else 0) for i in range(k)]\n    splits, ptr = [], 0\n    for s in sizes:\n        splits.append(idx[ptr:ptr+s].tolist())\n        ptr += s\n    return splits\ndef dirichlet_split(ds, k, alpha):",
+        "detail": "main1",
+        "documentation": {}
+    },
+    {
+        "label": "dirichlet_split",
+        "kind": 2,
+        "importPath": "main1",
+        "description": "main1",
+        "peekOfCode": "def dirichlet_split(ds, k, alpha):\n    labels = np.array([y for _, y in ds])\n    C = labels.max() + 1\n    splits = [[] for _ in range(k)]\n    for c in range(C):\n        idx_c = np.where(labels == c)[0]\n        np.random.shuffle(idx_c)\n        props = np.random.dirichlet([alpha]*k)\n        counts = (props / props.sum() * len(idx_c)).astype(int)\n        ptr = 0",
+        "detail": "main1",
+        "documentation": {}
+    },
+    {
+        "label": "compute_fes",
+        "kind": 2,
+        "importPath": "main1",
+        "description": "main1",
+        "peekOfCode": "def compute_fes(accs, eps=1e-8):\n    mu = np.mean(accs)\n    sigma = np.std(accs)\n    return 1 - sigma/(mu+eps)\n# Build QNode\ndef build_qnode(nq, nl):\n    dev_name = 'lightning.gpu' if torch.cuda.is_available() else 'lightning.qubit'\n    dev = qml.device(dev_name, wires=nq)\n    logger.info(f\"Using PennyLane device: {dev_name}\")\n    @qml.qnode(dev, interface='torch', diff_method='adjoint')",
+        "detail": "main1",
+        "documentation": {}
+    },
+    {
+        "label": "build_qnode",
+        "kind": 2,
+        "importPath": "main1",
+        "description": "main1",
+        "peekOfCode": "def build_qnode(nq, nl):\n    dev_name = 'lightning.gpu' if torch.cuda.is_available() else 'lightning.qubit'\n    dev = qml.device(dev_name, wires=nq)\n    logger.info(f\"Using PennyLane device: {dev_name}\")\n    @qml.qnode(dev, interface='torch', diff_method='adjoint')\n    def circuit(inputs, weights):\n        for i in range(nq):\n            qml.RY(inputs[i], wires=i)\n        idx = 0\n        for _ in range(nl):",
+        "detail": "main1",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "main1",
+        "description": "main1",
+        "peekOfCode": "def main():\n    args = get_args()\n    logger.info(f\"Args: {args}\")\n    # Directories\n    name = f\"venom_f{args.malicious_ratio}_{args.distribution}_a{args.alpha}_nq{args.pca_components}_r{args.rounds}\"\n    base = os.path.join(args.exp_root, name)\n    for sub in ['data','models','plots']:\n        os.makedirs(os.path.join(base, sub), exist_ok=True)\n    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\n    logger.info(f\"Device: {device}\")",
+        "detail": "main1",
+        "documentation": {}
+    },
+    {
+        "label": "logger",
+        "kind": 5,
+        "importPath": "main1",
+        "description": "main1",
+        "peekOfCode": "logger = logging.getLogger(__name__)\n# Argument parser\ndef get_args():\n    p = argparse.ArgumentParser(\"Optimized VENOM QFL on MNIST\")\n    p.add_argument(\"--rounds\", type=int, default=100)\n    p.add_argument(\"--clients\", type=int, default=20)\n    p.add_argument(\"--malicious_ratio\", type=float, default=0.1)\n    p.add_argument(\"--distribution\", choices=[\"iid\",\"dirichlet\"], default=\"iid\")\n    p.add_argument(\"--alpha\", type=float, default=0.5)\n    p.add_argument(\"--trigger_round\", type=int, default=50)",
+        "detail": "main1",
+        "documentation": {}
+    }
+]
