@@ -3,9 +3,15 @@ Training script for classical models.
 """
 
 import os
+import sys
 import logging
 import argparse
 from typing import Dict, Any
+
+# Add project root to Python path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(project_root)
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
