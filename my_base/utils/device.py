@@ -8,10 +8,18 @@ from typing import Optional, Union, Tuple
 import torch
 import pennylane as qml
 from qiskit_aer import Aer
-from qiskit.providers.ibmq import IBMQFactory
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
+
+# Import IBMQ provider only if needed
+def get_ibmq_provider():
+    try:
+        from qiskit.providers.ibmq import IBMQFactory
+        return IBMQFactory()
+    except ImportError:
+        logger.warning("qiskit-ibmq-provider not installed. IBMQ backend will not be available.")
+        return None
 
 def get_classical_device(device_str: str = "cpu", device_id: int = 0) -> torch.device:
     """
@@ -62,13 +70,23 @@ def get_quantum_device(
         load_dotenv()
         ibmq_token = os.getenv("IBMQ_TOKEN")
         if not ibmq_token:
-            raise ValueError(
+            logger.warning(
                 "IBMQ_TOKEN not found in environment. "
-                "Please set it in .env file or environment variables."
+                "Falling back to simulator backend."
             )
+            return get_quantum_device("simulator", n_qubits, shots)
         
         # Initialize IBMQ provider
-        provider = IBMQFactory().enable_account(ibmq_token)
+        provider = get_ibmq_provider()
+        if provider is None:
+            logger.warning(
+                "IBMQ provider not available. "
+                "Falling back to simulator backend."
+            )
+            return get_quantum_device("simulator", n_qubits, shots)
+        
+        # Enable account and get backend
+        provider.enable_account(ibmq_token)
         
         if not ibmq_backend:
             # Use least busy backend if none specified

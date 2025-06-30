@@ -1,0 +1,2 @@
+2025-06-30 14:13:23,021 | INFO | qfl | Experiment config: {'dataset': 'mnist', 'fl_type': 'classical', 'compute_backend': 'cpu', 'attack': None, 'defense': None, 'model': 'cnn', 'epochs': 50, 'batch_size': 64, 'local_epochs': 5, 'lr': 0.01, 'resume': False, 'seed': 42, 'n_qubits': 4, 'shots': 1024, 'ibmq_backend': 'ibmq_qasm_simulator', 'data_distribution': 'iid', 'config': 'config.py', 'verbosity': 1}
+2025-06-30 14:13:23,021 | INFO | qfl | Using device: cpu
